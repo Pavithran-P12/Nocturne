@@ -8,3 +8,6 @@ Thumbs.db
 keystore.properties
 *.pem
 android/app/release/
+
+# New upload key (never commit)
+keys/
