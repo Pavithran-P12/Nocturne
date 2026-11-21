@@ -1,0 +1,15 @@
+{
+  "appId": "com.nosgamesp12.nocturne",
+  "appName": "Nocturne",
+  "webDir": "www",
+  "android": {
+    "backgroundColor": "#3B1FD1"
+  },
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK",
+      "insetsHandling": "css",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

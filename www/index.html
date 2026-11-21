@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#3B1FD1">
+  <title>Nocturne: Truth or Dare</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app">
+
+    <!-- 18+ check, first launch only -->
+    <section id="screen-gate" class="screen screen-gate hidden">
+      <div class="gate-mark">
+        <svg class="gate-bottle" viewBox="0 0 60 200" aria-hidden="true"><use href="#bottle-art"/></svg>
+      </div>
+      <h1 class="wordmark" tabindex="-1">Nocturne</h1>
+      <p class="sticker-tag">spin the bottle, truth or dare</p>
+      <p class="gate-lede">Truth or dare, decided by a spinning bottle. Some questions get flirty, so everyone playing should be 18 or older.</p>
+      <div class="gate-actions">
+        <button class="btn btn-brass" id="gate-yes">We're all 18+</button>
+        <button class="btn btn-quiet" id="gate-no">Someone here is under 18</button>
+      </div>
+    </section>
+
+    <!-- Setup -->
+    <section id="screen-setup" class="screen screen-setup hidden">
+      <header class="setup-head">
+        <h1 class="wordmark wordmark-sm" tabindex="-1">Nocturne</h1>
+        <p class="setup-lede">Add everyone in the order you're sitting, so the bottle points at the right person.</p>
+      </header>
+
+      <section class="block" aria-labelledby="players-title">
+        <div class="block-head">
+          <h2 id="players-title">Who's playing</h2>
+          <span class="count" id="player-count">0 of 12</span>
+        </div>
+        <ol id="player-list" class="seats-list"></ol>
+        <form id="add-player-form" class="add-form" autocomplete="off" novalidate>
+          <label class="field-label" for="player-input">Add the next person around the table</label>
+          <div class="add-row">
+            <input id="player-input" type="text" maxlength="14" placeholder="e.g. Priya"
+                   enterkeyhint="done" autocapitalize="words" autocorrect="off" spellcheck="false"
+                   aria-describedby="player-msg">
+            <button type="submit" class="btn btn-add">Add</button>
+          </div>
+          <p class="field-msg" id="player-msg" aria-live="polite"></p>
+        </form>
+      </section>
+
+      <section class="block" aria-labelledby="vibe-title">
+        <div class="block-head">
+          <h2 id="vibe-title">How wild tonight?</h2>
+        </div>
+        <div id="level-list" class="vibes"></div>
+      </section>
+
+      <div class="start-bar">
+        <p class="start-note" id="player-hint">Add 2 players to start.</p>
+        <button class="btn btn-brass btn-wide" id="start-btn" disabled>Start the game</button>
+      </div>
+    </section>
+
+    <!-- Game -->
+    <section id="screen-game" class="screen screen-game hidden">
+      <header class="game-bar">
+        <button class="icon-btn" id="back-btn" aria-label="Edit players">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <h1 class="round" tabindex="-1">Round <span id="round-num">1</span></h1>
+        <button class="icon-btn" id="score-btn" aria-label="Show scores">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path d="M7 4h10v4a5 5 0 01-10 0V4zM5 5H3v2a3 3 0 003 3M19 5h2v2a3 3 0 01-3 3M12 13v4M8 20h8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </header>
+
+      <div class="table-wrap">
+        <div class="table" id="table">
+          <div class="record" id="record" aria-hidden="true"><div class="record-label"></div></div>
+          <div id="seats"></div>
+          <div class="confetti" id="confetti" aria-hidden="true"></div>
+          <button class="bottle-btn" id="bottle-btn" aria-label="Spin the bottle">
+            <svg id="bottle" class="bottle" viewBox="0 0 60 200" aria-hidden="true"><use href="#bottle-art"/></svg>
+          </button>
+        </div>
+        <p class="spin-hint" id="spin-hint" aria-live="polite">Tap the bottle to spin</p>
+      </div>
+    </section>
+
+    <!-- Bottom sheet -->
+    <div class="sheet-backdrop hidden" id="sheet-backdrop"></div>
+    <div class="sheet" id="sheet" role="dialog" aria-modal="true" aria-label="Turn">
+      <div class="sheet-grip" aria-hidden="true"></div>
+
+      <div id="step-choose" class="step">
+        <p class="sheet-lede">The bottle points at</p>
+        <h2 class="chosen" id="chosen-name">—</h2>
+        <div class="td-row">
+          <button class="td td-truth" id="truth-btn">Truth</button>
+          <button class="td td-dare" id="dare-btn">Dare</button>
+        </div>
+        <button class="btn btn-quiet" id="random-btn">Let the deck decide</button>
+      </div>
+
+      <div id="step-card" class="step hidden">
+        <article class="play-card" id="prompt-card">
+          <span class="corner corner-tl" aria-hidden="true"><b class="corner-letter">T</b></span>
+          <span class="corner corner-br" aria-hidden="true"><b class="corner-letter">T</b></span>
+          <header class="card-top">
+            <span class="card-type" id="prompt-type">Truth</span>
+            <span class="card-level" id="prompt-level">Flirty</span>
+          </header>
+          <p class="card-text" id="prompt-text"></p>
+          <p class="card-for" id="prompt-for">for —</p>
+        </article>
+        <div class="action-row">
+          <button class="btn btn-quiet" id="skip-btn">Skip</button>
+          <button class="btn btn-quiet" id="swap-btn">Draw another</button>
+          <button class="btn btn-brass" id="done-btn">Done</button>
+        </div>
+      </div>
+
+      <div id="step-penalty" class="step hidden">
+        <p class="sheet-lede" id="penalty-who">Skipped. Pay the forfeit:</p>
+        <p class="forfeit" id="penalty-text"></p>
+        <button class="btn btn-brass btn-wide" id="penalty-ok">Forfeit paid, next spin</button>
+      </div>
+
+      <div id="step-leave" class="step hidden">
+        <h2 class="sheet-title">Leave this game?</h2>
+        <p class="sheet-lede">Scores and rounds reset. Your players and vibes stay saved.</p>
+        <div class="confirm-row">
+          <button class="btn btn-quiet btn-danger" id="leave-yes">Leave game</button>
+          <button class="btn btn-brass" id="leave-no">Keep playing</button>
+        </div>
+      </div>
+
+      <div id="step-scores" class="step hidden">
+        <h2 class="sheet-title">Scores</h2>
+        <p class="sheet-lede">1 point for a truth, 2 for a dare.</p>
+        <ol class="scores" id="scores"></ol>
+        <button class="btn btn-quiet btn-wide" id="scores-close">Back to the table</button>
+      </div>
+    </div>
+
+    <div class="toast hidden" id="toast" role="status" aria-live="polite">
+      <span id="toast-text"></span>
+      <button type="button" class="toast-action hidden" id="toast-action">Undo</button>
+    </div>
+  </main>
+
+  <!-- Shared bottle artwork (neck points up at 0deg) -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <defs>
+      <symbol id="bottle-art" viewBox="-4 -4 68 208">
+        <path d="M23 15h14v34c0 10 16 18 16 38v97a10 10 0 01-10 10H17a10 10 0 01-10-10V87c0-20 16-28 16-38z"
+              fill="#2FC77A" stroke="#1A0B3D" stroke-width="3.5" stroke-linejoin="round"/>
+        <path d="M20 3h20v12H20z" fill="#FFD23F" stroke="#1A0B3D" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M20 9h20" stroke="#1A0B3D" stroke-width="2" stroke-dasharray="3 2"/>
+        <rect x="27" y="19" width="3.5" height="26" rx="1.75" fill="#fff" opacity=".6"/>
+        <rect x="13" y="92" width="5" height="16" rx="2.5" fill="#fff" opacity=".6"/>
+        <rect x="13" y="158" width="5" height="24" rx="2.5" fill="#fff" opacity=".45"/>
+        <rect x="7" y="114" width="46" height="38" fill="#FF3EA5" stroke="#1A0B3D" stroke-width="3"/>
+        <path d="M30 120l3.6 7.3 8 1.2-5.8 5.6 1.4 8-7.2-3.8-7.2 3.8 1.4-8-5.8-5.6 8-1.2z"
+              fill="#FFF7E8" stroke="#1A0B3D" stroke-width="2" stroke-linejoin="round"/>
+      </symbol>
+    </defs>
+  </svg>
+
+  <script src="questions.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

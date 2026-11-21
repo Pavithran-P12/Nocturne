@@ -1,0 +1,10 @@
+node_modules/
+.DS_Store
+Thumbs.db
+
+# Release signing — never commit the upload key or its passwords
+*.jks
+*.keystore
+keystore.properties
+*.pem
+android/app/release/

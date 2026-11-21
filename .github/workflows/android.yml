@@ -1,0 +1,91 @@
+name: Android build
+
+# Builds on every push to main, on version tags (v1.1, v1.2 …), or by hand from the Actions tab.
+#  - Always:              a debug APK you can install on your phone to test
+#  - With signing secrets: a signed release AAB (upload this to Play Console) + a signed release APK
+#
+# Signing secrets (Settings → Secrets and variables → Actions → New repository secret):
+#   NOCTURNE_KEYSTORE_BASE64   the upload keystore (.jks), base64-encoded — see RELEASE.md
+#   NOCTURNE_KEYSTORE_PASSWORD
+#   NOCTURNE_KEY_ALIAS
+#   NOCTURNE_KEY_PASSWORD
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      HAS_KEYSTORE: ${{ secrets.NOCTURNE_KEYSTORE_BASE64 != '' }}
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Copy web game into the Android project
+        run: npx cap sync android
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - uses: android-actions/setup-android@v4
+
+      - name: Restore upload keystore
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          echo "${{ secrets.NOCTURNE_KEYSTORE_BASE64 }}" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          echo "NOCTURNE_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+
+      - name: Build debug APK
+        working-directory: android
+        run: |
+          chmod +x ./gradlew
+          ./gradlew --no-daemon assembleDebug
+
+      - name: Build signed release AAB + APK
+        if: env.HAS_KEYSTORE == 'true'
+        working-directory: android
+        env:
+          NOCTURNE_KEYSTORE_PASSWORD: ${{ secrets.NOCTURNE_KEYSTORE_PASSWORD }}
+          NOCTURNE_KEY_ALIAS: ${{ secrets.NOCTURNE_KEY_ALIAS }}
+          NOCTURNE_KEY_PASSWORD: ${{ secrets.NOCTURNE_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - name: Show which key signed the release (compare with Play Console)
+        if: env.HAS_KEYSTORE == 'true'
+        run: keytool -printcert -jarfile android/app/build/outputs/bundle/release/app-release.aab | grep -E "SHA1|SHA256" || true
+
+      - name: No signing key yet
+        if: env.HAS_KEYSTORE != 'true'
+        run: echo "::warning::Signing secrets not set, so only the debug APK was built. Follow RELEASE.md to add your upload key."
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: nocturne-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+
+      - uses: actions/upload-artifact@v7
+        if: env.HAS_KEYSTORE == 'true'
+        with:
+          name: nocturne-release-for-play-console
+          path: |
+            android/app/build/outputs/bundle/release/app-release.aab
+            android/app/build/outputs/apk/release/app-release.apk
